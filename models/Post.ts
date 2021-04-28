@@ -1,6 +1,6 @@
 export default interface Post {
-	id: number;
-	author: number;
+	id: string;
+	author: string;
 	title: string;
 	content: string;
 	comments: string[];

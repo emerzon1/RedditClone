@@ -5,6 +5,9 @@ const router = express.Router();
 
 router.post("/", (req, res, next) => {
 	const subredditName: string = req.body.name;
+	if (!subredditName) {
+		res.status(400).json("You must enter a subreddit name");
+	}
 	if (subreddits[subredditName]) {
 		res.status(409).json("There already is a subreddit with that name.");
 		return;
@@ -12,7 +15,7 @@ router.post("/", (req, res, next) => {
 	const newSubreddit: Subreddit = {
 		name: subredditName,
 		moderator: req.user.username, // setting user who made the subreddit as the moderator
-		posts: [],
+		posts: {},
 		numFollowers: 0,
 	};
 	subreddits[subredditName] = newSubreddit;
@@ -20,7 +23,7 @@ router.post("/", (req, res, next) => {
 });
 router.get("/:subreddit", (req, res, next) => {
 	if (!subreddits[req.params.subreddit]) {
-		res.status(404);
+		res.status(404).json("No subreddit with that name");
 	} else {
 		res.json(subreddits[req.params.subreddit]);
 	}
