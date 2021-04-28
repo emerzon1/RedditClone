@@ -1,5 +1,5 @@
 import express from "express";
-import { posts, subreddits } from "../tools/db";
+import { subreddits, currentUser } from "../tools/db";
 import Post from "../models/Post";
 
 const router = express.Router();
@@ -18,9 +18,17 @@ router.post("/:subreddit/", (req, res, next) => {
 		) +
 		"" +
 		Math.random() * currentTime.getSeconds();
+	if (!(req.body.title && req.body.content)) {
+		res.status(400).json("Missing title or content");
+		return;
+	}
+	if (!subreddits[req.params.subreddit]) {
+		res.status(404).json("No subreddit with that name");
+		return;
+	}
 	const newPost: Post = {
 		title: req.body.title,
-		author: req.user.username,
+		author: currentUser[0].username,
 		content: req.body.content,
 		id: uniqueID,
 		timestamp: currentTime,
@@ -28,13 +36,14 @@ router.post("/:subreddit/", (req, res, next) => {
 		comments: [],
 	};
 
-	posts[uniqueID] = newPost;
+	// posts[uniqueID] = newPost;
 	subreddits[req.params.subreddit].posts[uniqueID] = newPost;
 	res.json(newPost);
 });
 router.get("/:subreddit/:post", (req, res, next) => {
 	if (!subreddits[req.params.subreddit]) {
 		res.status(404).json("No subreddit with that name");
+		return;
 	}
 	if (!subreddits[req.params.subreddit].posts[req.params.post]) {
 		res.status(404).json("No post with that name");

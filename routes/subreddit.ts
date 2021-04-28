@@ -1,5 +1,5 @@
 import express from "express";
-import { subreddits } from "../tools/db";
+import { currentUser, subreddits } from "../tools/db";
 import Subreddit from "../models/Subreddit";
 const router = express.Router();
 
@@ -7,6 +7,7 @@ router.post("/", (req, res, next) => {
 	const subredditName: string = req.body.name;
 	if (!subredditName) {
 		res.status(400).json("You must enter a subreddit name");
+		return;
 	}
 	if (subreddits[subredditName]) {
 		res.status(409).json("There already is a subreddit with that name.");
@@ -14,7 +15,7 @@ router.post("/", (req, res, next) => {
 	}
 	const newSubreddit: Subreddit = {
 		name: subredditName,
-		moderator: req.user.username, // setting user who made the subreddit as the moderator
+		moderator: currentUser[0].username, // setting user who made the subreddit as the moderator
 		posts: {},
 		numFollowers: 0,
 	};

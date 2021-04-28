@@ -4,11 +4,11 @@ import bcrypt from "bcrypt";
 import dotenv from "dotenv";
 dotenv.config();
 const router = express.Router();
-import { users } from "../tools/db";
+import { currentUser, users } from "../tools/db";
 import User from "../models/User";
 declare module "express-serve-static-core" {
 	interface Request {
-		user?: User;
+		user: User;
 	}
 }
 // const subreddits: { [id: number]: post } = {};
@@ -22,7 +22,7 @@ router.post("/login", async (req, res, next) => {
 	);
 	if (isAuthorized) {
 		const token = generateAccessToken(req.body.username);
-		req.user = users[req.body.username];
+		currentUser[0] = users[req.body.username];
 		res.json(token);
 	} else {
 		res.status(401);
@@ -41,7 +41,7 @@ router.post("/signup", async (req, res, next) => {
 			name,
 			following: [],
 		};
-		req.user = newUser;
+		currentUser[0] = newUser;
 		users[username] = newUser;
 		const token = generateAccessToken(username);
 		res.json(token);

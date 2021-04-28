@@ -4,10 +4,10 @@ import path from "path";
 import cookieParser from "cookie-parser";
 import logger from "morgan";
 import dotenv from "dotenv";
-import jwt from "jsonwebtoken";
 import indexRouter from "./routes/index";
 import usersRouter from "./routes/users";
 import subredditRouter from "./routes/subreddit";
+import postRouter from "./routes/post";
 import authRouter, { authenticateToken } from "./routes/auth";
 
 dotenv.config();
@@ -28,6 +28,7 @@ app.use("/api", authRouter);
 app.use("/", authenticateToken, indexRouter);
 app.use("/users", authenticateToken, usersRouter);
 app.use("/r", authenticateToken, subredditRouter);
+app.use("/r", authenticateToken, postRouter);
 
 // catch 404 and forward to error handler
 app.use((req, res, next) => {
