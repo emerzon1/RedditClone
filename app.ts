@@ -7,6 +7,7 @@ import dotenv from "dotenv";
 import jwt from "jsonwebtoken";
 import indexRouter from "./routes/index";
 import usersRouter from "./routes/users";
+import subredditRouter from "./routes/subreddit";
 import authRouter, { authenticateToken } from "./routes/auth";
 
 dotenv.config();
@@ -26,6 +27,7 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use("/api", authRouter);
 app.use("/", authenticateToken, indexRouter);
 app.use("/users", authenticateToken, usersRouter);
+app.use("/r", authenticateToken, subredditRouter);
 
 // catch 404 and forward to error handler
 app.use((req, res, next) => {
