@@ -7,7 +7,6 @@ const router = express.Router();
 router.post("/:subreddit/", (req, res, next) => {
 	const currentTime: Date = new Date(Date.now());
 	const uniqueID =
-		req.body.title +
 		Date.UTC(
 			currentTime.getFullYear(),
 			currentTime.getMonth(),
@@ -17,7 +16,7 @@ router.post("/:subreddit/", (req, res, next) => {
 			currentTime.getSeconds()
 		) +
 		"" +
-		Math.random() * currentTime.getSeconds();
+		Math.floor(Math.random() * currentTime.getSeconds() * 100);
 	if (!(req.body.title && req.body.content)) {
 		res.status(400).json("Missing title or content");
 		return;
