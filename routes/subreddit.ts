@@ -1,35 +1,89 @@
 import express from "express";
-import { currentUser, subreddits } from "../tools/db";
-import Subreddit from "../models/Subreddit";
+import { db } from "../tools/db";
 const router = express.Router();
 
-router.post("/", (req, res, next) => {
-	const subredditName: string = req.body.name;
+router.post("/", async (req, res, next) => {
+	const subredditName: string = req.body.name.toLowerCase();
 	if (!subredditName) {
 		res.status(400).json("You must enter a subreddit name");
 		return;
-	}
-	if (subreddits[subredditName]) {
-		res.status(409).json("There already is a subreddit with that name.");
+	} else if (subredditName.includes(" ")) {
+		res.status(400).json("Subreddit name cannot contain spaces");
 		return;
 	}
-	const newSubreddit: Subreddit = {
-		name: subredditName,
-		moderator: currentUser[0].username, // setting user who made the subreddit as the moderator
-		posts: {},
-		numFollowers: 0,
-	};
-	subreddits[subredditName] = newSubreddit;
-	res.json(newSubreddit);
+	const statement = `SELECT name FROM subreddits WHERE name = ?`;
+	db.get(statement, [subredditName], (err, row) => {
+		if (err) {
+			res.status(500).json("Server error");
+			console.log(err);
+		} else if (row) {
+			res.status(409).json(
+				"There already is a subreddit with that name."
+			);
+		} else {
+			db.get(
+				"SELECT id FROM users WHERE username = ?",
+				[req.user],
+				(error, result) => {
+					if (error) {
+						res.status(500).json("Server error");
+						console.log(error);
+					}
+					db.run(
+						"INSERT INTO subreddits (name, moderator, numFollowers) VALUES (?, ?, ?)",
+						[subredditName, result.user, 0],
+						(e: any) => {
+							if (e) {
+								res.status(500).json("Server error");
+								console.log(e);
+							}
+						}
+					);
+					res.status(200).send("Success");
+				}
+			);
+		}
+	});
 });
 router.get("/:subreddit", (req, res, next) => {
-	if (!subreddits[req.params.subreddit]) {
-		res.status(404).json("No subreddit with that name");
-	} else {
-		res.json(subreddits[req.params.subreddit]);
-	}
+	db.get(
+		"SELECT * FROM subreddits WHERE name = ?",
+		[req.params.subreddit.toLowerCase()],
+		(err, row) => {
+			if (err) {
+				res.status(500).json("Server error");
+				console.log(err);
+			} else if (!row) {
+				res.status(404).json("There is no subreddit with that name.");
+			} else {
+				db.all(
+					"SELECT * FROM posts JOIN subreddits ON posts.subreddit = subreddits.id WHERE subreddits.name = ?",
+					[req.params.subreddit.toLowerCase()],
+					(e, rows) => {
+						if (e) {
+							res.status(500).json("Server error");
+							console.log(e);
+						}
+						res.json(rows);
+					}
+				);
+			}
+		}
+	);
 });
 router.get("/", (req, res, next) => {
-	res.json(subreddits);
+	db.all(
+		"SELECT name, moderator, numFollowers FROM subreddits",
+		[],
+		(err, rows) => {
+			if (err) {
+				res.status(500).json("Server error");
+				console.log(err);
+			} else {
+				res.json(rows);
+			}
+		}
+	);
 });
+
 export default router;
